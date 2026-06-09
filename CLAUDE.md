@@ -5,16 +5,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-uv sync                                  # install / sync deps
-uv run pytest                            # run tests
-uv run mcp dev src/n26_mcp/server.py     # interactive inspector (dev)
-uv run n26-mcp                           # run server over stdio
-
-make status              # check for cached session
-make logout              # delete session file (~/.config/n26-mcp/session.json)
+make setup       # install deps (uv sync) + verify credential access
+make register    # register MCP server with Claude Code (auto-detects op vs plain .env)
+make dev         # run server with interactive inspector UI
+make test        # run test suite (uv run pytest)
+make status      # check for cached session
+make logout      # delete session file (~/.config/n26-mcp/session.json)
+make help        # list all targets
 ```
 
-The `Makefile` also has `make setup` (installs deps + verifies credential access) and `make clean`.
+Underlying commands if needed directly:
+
+```bash
+uv sync
+uv run pytest
+uv run mcp dev src/n26_mcp/server.py
+uv run n26-mcp
+```
 
 ## Running with Headroom
 

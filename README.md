@@ -8,16 +8,9 @@ MCP server for N26 bank — read-only access via the unofficial N26 web API.
 
 ## Quickstart
 
-### 1. Install dependencies
+### 1. Configure credentials
 
-```bash
-cd /path/to/n26-mcp
-uv sync
-```
-
-### 2. Configure credentials
-
-Copy the example env file and choose your auth method:
+Copy the example env file and fill in your N26 credentials:
 
 ```bash
 cp .env.example .env
@@ -31,56 +24,62 @@ N26_USERNAME=your.email@example.com
 N26_PASSWORD=your-n26-password
 ```
 
-The server auto-loads `.env` on startup. Done.
-
-**Option B — 1Password CLI** (recommended for security):
+**Option B — 1Password CLI** (recommended):
 
 ```ini
-# .env  (or ~/.config/op/local-env.env)
+# .env  (or use ~/.config/op/local-env.env)
 N26_USERNAME=op://Vault/Item/N26_USERNAME
 N26_PASSWORD=op://Vault/Item/N26_PASSWORD
 ```
 
-Wrap the server command with `op run --env-file .env --` so 1Password resolves the references before the process starts (see step 3).
-
-### 3. Register the MCP server with Claude Code
-
-**Plain credentials** (`.env` in repo root, auto-loaded):
+### 2. Install and verify
 
 ```bash
-claude mcp add n26 --scope user -- uv --directory /path/to/n26-mcp run n26-mcp
+make setup
 ```
 
-**1Password**:
+Installs dependencies (`uv sync`) and checks that your credentials are accessible.
+
+### 3. Register with Claude Code
 
 ```bash
-claude mcp add n26 --scope user -- op run --env-file /path/to/n26-mcp/.env -- uv --directory /path/to/n26-mcp run n26-mcp
+make register
 ```
 
-Replace `/path/to/n26-mcp` with the actual repo path in both commands.
+Auto-detects whether you're using 1Password or plain credentials and runs the right `claude mcp add` command. Restart Claude Code afterwards.
 
 ### 4. Authenticate via Claude Code
 
 ```
-login()                    # triggers N26 MFA (push to N26 app)
+login()                    # triggers N26 MFA (push notification to N26 app)
 submit_mfa()               # poll for push approval (approve in app first)
+```
 
-# or use SMS instead of push:
+Or use SMS instead of push:
+
+```
 login()
 request_sms_code()         # sends SMS to your phone
 submit_mfa(otp="123456")   # enter the SMS code
 ```
 
-Session tokens are cached at `~/.config/n26-mcp/session.json` (chmod 600) and are valid for ~14 minutes. Re-run `login()` + `submit_mfa()` when the session expires.
+Session tokens are cached at `~/.config/n26-mcp/session.json` (chmod 600) and valid for ~14 minutes. Re-run `login()` + `submit_mfa()` when expired.
 
 ---
 
-## Security notes
+## Make targets
 
-- Credentials are read from environment only — never stored, never sent to Claude
-- `.env` is in `.gitignore` — never commit it
-- Session file at `~/.config/n26-mcp/session.json` contains the access token (valid ~14 min)
-- Read-only: no payment or write operations are exposed
+| Target | Description |
+|--------|-------------|
+| `make setup` | Install deps + verify credential access |
+| `make register` | Register MCP server with Claude Code |
+| `make run` | Start MCP server over stdio |
+| `make dev` | Start with interactive inspector UI |
+| `make status` | Check whether a session is cached |
+| `make logout` | Delete cached session |
+| `make test` | Run test suite |
+| `make clean` | Remove build artifacts |
+| `make help` | List all targets |
 
 ---
 
@@ -95,21 +94,16 @@ Session tokens are cached at `~/.config/n26-mcp/session.json` (chmod 600) and ar
 | `auth_status` | Check session state and time until expiry |
 | `get_profile` | User profile info |
 | `get_account` | Balance and IBAN |
-| `get_transactions` | Transaction list (supports date filters) |
+| `get_transactions` | Transaction list (supports date range filters) |
 | `get_transaction` | Single transaction by ID |
 | `get_spaces` | Savings Spaces with balances |
 | `get_cards` | Card details |
 
 ---
 
-## Make targets
+## Security notes
 
-| Target | Description |
-|--------|-------------|
-| `make setup` | Install deps + verify credentials are reachable |
-| `make run` | Start MCP server over stdio |
-| `make dev` | Start MCP server with interactive inspector UI |
-| `make status` | Check whether a session is cached |
-| `make logout` | Delete cached session |
-| `make test` | Run test suite |
-| `make clean` | Remove build artifacts and `__pycache__` |
+- Credentials read from environment only — never stored, never sent to Claude
+- `.env` is in `.gitignore` — never commit it
+- Session file at `~/.config/n26-mcp/session.json` contains the access token (valid ~14 min)
+- Read-only: no payment or write operations are exposed
