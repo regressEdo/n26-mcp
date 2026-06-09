@@ -2,7 +2,7 @@ from typing import Any, Optional
 
 import httpx
 
-from .auth import get_access_token, refresh_access_token
+from .auth import get_access_token
 
 BASE_URL = "https://api.tech26.de"
 
@@ -12,7 +12,7 @@ class N26Client:
         self._http = httpx.AsyncClient(base_url=BASE_URL, timeout=30.0)
 
     async def _get(self, path: str, params: Optional[dict] = None) -> Any:
-        token = await get_access_token()
+        token = get_access_token()
         if not token:
             raise RuntimeError("Not authenticated. Call login first.")
 
@@ -23,14 +23,7 @@ class N26Client:
         )
 
         if resp.status_code == 401:
-            token = await refresh_access_token()
-            if not token:
-                raise RuntimeError("Session expired. Please call login again.")
-            resp = await self._http.get(
-                path,
-                params=params,
-                headers={"Authorization": f"Bearer {token}"},
-            )
+            raise RuntimeError("Session expired (token valid ~14 min). Call login again.")
 
         resp.raise_for_status()
         return resp.json()

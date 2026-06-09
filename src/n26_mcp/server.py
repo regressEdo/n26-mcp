@@ -1,9 +1,13 @@
+import time
 from datetime import datetime
 from typing import Optional
 
+from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 
-from .auth import complete_login, is_authenticated, start_login
+load_dotenv()
+
+from .auth import clear_session, complete_login, get_token_expiry_ms, is_authenticated, request_sms, start_login
 from .client import N26Client
 
 mcp = FastMCP("N26 Bank (read-only)")
@@ -25,18 +29,42 @@ async def login() -> dict:
 
 
 @mcp.tool()
-async def submit_mfa(otp: str) -> dict:
+async def request_sms_code() -> dict:
     """
-    Complete N26 MFA login with the OTP from the N26 app or SMS.
+    Request an SMS verification code instead of using the N26 app push.
     Call this after login returns status='mfa_required'.
+    Then call submit_mfa with the received code.
+    """
+    return await request_sms()
+
+
+@mcp.tool()
+async def submit_mfa(otp: Optional[str] = None) -> dict:
+    """
+    Complete N26 MFA login.
+    Pass otp=<code> for SMS verification.
+    Call without otp to poll for push notification approval (approve in N26 app first).
     """
     return await complete_login(otp)
 
 
 @mcp.tool()
+async def logout() -> dict:
+    """Clear the local N26 session. Does not invalidate the token server-side."""
+    clear_session()
+    return {"status": "logged_out"}
+
+
+@mcp.tool()
 async def auth_status() -> dict:
     """Check whether the MCP server currently has a valid N26 session."""
-    return {"authenticated": is_authenticated()}
+    if not is_authenticated():
+        return {"authenticated": False}
+    expires_ms = get_token_expiry_ms()
+    if expires_ms:
+        remaining_s = max(0, (expires_ms - int(time.time() * 1000)) // 1000)
+        return {"authenticated": True, "token_expires_in_seconds": remaining_s}
+    return {"authenticated": True}
 
 
 @mcp.tool()

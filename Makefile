@@ -20,16 +20,16 @@ dev: ## Run MCP server with interactive inspector UI
 test: ## Run test suite
 	uv run pytest
 
-status: ## Show auth status (token file present or not)
-	@if [ -f "$(CONFIG_DIR)/tokens.json" ]; then \
-		echo "Authenticated — tokens at $(CONFIG_DIR)/tokens.json"; \
+status: ## Show auth status (session file present or not)
+	@if [ -f "$(CONFIG_DIR)/session.json" ]; then \
+		echo "Authenticated — session at $(CONFIG_DIR)/session.json"; \
 	else \
 		echo "Not authenticated — call login() via Claude"; \
 	fi
 
-logout: ## Delete stored OAuth tokens (forces re-auth)
-	@rm -f "$(CONFIG_DIR)/tokens.json" "$(CONFIG_DIR)/mfa_state.json"
-	@echo "Tokens removed"
+logout: ## Delete cached session (forces re-auth)
+	@rm -f "$(CONFIG_DIR)/session.json"
+	@echo "Session removed"
 
 clean: ## Remove build artifacts and cache files
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
