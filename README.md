@@ -22,8 +22,13 @@ This installs Python deps and verifies the 1Password fields are reachable.
 
 ### 2. Register the MCP server with Claude Code
 
+> **Already done** if you followed this guide end-to-end — check with `claude mcp list`.
+
+If you need to re-register, the `claude` alias (headroom) strips the `--` separator.
+Use the real binary directly:
+
 ```bash
-claude mcp add n26 --scope user -- uv --directory /home/edo/OneDrive/Documenti/local/gitrepo/personal/n26-mcp run n26-mcp
+/usr/bin/claude mcp add n26 --scope user -- uv --directory /home/edo/OneDrive/Documenti/local/gitrepo/personal/n26-mcp run n26-mcp
 ```
 
 ### 3. Reload your shell, then authenticate via Claude
