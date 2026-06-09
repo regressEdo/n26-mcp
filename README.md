@@ -4,41 +4,80 @@ MCP server for N26 bank — read-only access via the unofficial N26 API.
 
 > **Warning:** Uses reverse-engineered internal API (`api.tech26.de`). No official support. May break on N26 API changes.
 
-## Setup
+## Quickstart
+
+### Prerequisites
+
+- [1Password CLI](https://developer.1password.com/docs/cli/) installed and vault unlocked
+- `uv` installed
+- `N26_USERNAME` and `N26_PASSWORD` fields present in your 1Password vault (see [Auth](#auth))
+
+### 1. Install dependencies
 
 ```bash
-uv sync
+make setup
 ```
 
-## Claude Code config
+This installs Python deps and verifies the 1Password fields are reachable.
 
-Add to `~/.claude/settings.json`:
+### 2. Register the MCP server with Claude Code
 
-```json
-{
-  "mcpServers": {
-    "n26": {
-      "command": "uv",
-      "args": ["--directory", "/path/to/n26-mcp", "run", "n26-mcp"]
-    }
-  }
-}
+```bash
+claude mcp add n26 --scope user -- uv --directory /path/to/n26-mcp run n26-mcp
 ```
 
-## Usage
+### 3. Reload your shell, then authenticate via Claude
 
-1. Call `login(username, password)` — N26 sends OTP to your phone/SMS
-2. Call `submit_mfa(otp)` — completes auth, tokens stored at `~/.config/n26-mcp/`
-3. Use any read-only tool: `get_account`, `get_transactions`, `get_spaces`, etc.
+Open Claude Code and run:
 
-Tokens refresh automatically. Refresh token valid ~180 days.
+```
+login()         # reads credentials from 1Password, triggers N26 MFA
+submit_mfa("123456")  # enter the OTP from your N26 app or SMS
+```
+
+Done — tokens are cached, future sessions auto-refresh for ~180 days.
+
+---
+
+## Auth
+
+**Credentials are never typed into Claude or stored in files.** The server reads
+`N26_USERNAME` and `N26_PASSWORD` exclusively from environment variables injected
+by the 1Password CLI at shell startup via `op-env-load`.
+
+The secret references live in `~/.config/op/local-env.env`:
+
+```
+N26_PASSWORD="op://Local Environment/ENV/N26_PASSWORD"
+N26_USERNAME="op://Local Environment/ENV/N26_USERNAME"
+```
+
+To set them up, add `N26_USERNAME` and `N26_PASSWORD` fields to the
+**`ENV`** item in your **`Local Environment`** 1Password vault, then run
+`op-env-load` (or open a new shell).
+
+---
+
+## Make targets
+
+| Target | Description |
+|--------|-------------|
+| `make setup` | Install deps + verify 1Password fields exist |
+| `make run` | Start MCP server over stdio (production mode) |
+| `make dev` | Start MCP server with interactive inspector UI |
+| `make status` | Check whether OAuth tokens are present |
+| `make logout` | Delete cached tokens (forces re-auth next session) |
+| `make test` | Run test suite |
+| `make clean` | Remove build artifacts and `__pycache__` |
+
+---
 
 ## Available tools
 
 | Tool | Description |
 |------|-------------|
-| `login` | Start auth with email + password |
-| `submit_mfa` | Complete MFA with OTP |
+| `login` | Start auth — reads credentials from 1Password |
+| `submit_mfa` | Complete MFA with OTP from N26 app or SMS |
 | `auth_status` | Check if session is active |
 | `get_profile` | User profile info |
 | `get_account` | Balance and IBAN |
@@ -47,8 +86,11 @@ Tokens refresh automatically. Refresh token valid ~180 days.
 | `get_spaces` | Savings Spaces with balances |
 | `get_cards` | Card details |
 
+---
+
 ## Security notes
 
-- Credentials are never stored — only OAuth tokens in `~/.config/n26-mcp/`
-- Device token is persisted to avoid re-pairing on every run
-- This is read-only: no payment or write operations
+- Credentials injected by 1Password CLI — never stored in plaintext, never sent to Claude
+- OAuth tokens stored at `~/.config/n26-mcp/tokens.json` (chmod 600)
+- Device token persisted to avoid re-pairing on every run
+- Read-only: no payment or write operations exposed
