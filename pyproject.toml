@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "n26-mcp"
-version = "0.1.0"
+version = "0.1.1"
 description = "MCP server for N26 bank (read-only)"
 readme = "README.md"
 license = { text = "MIT" }

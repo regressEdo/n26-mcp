@@ -254,23 +254,27 @@ async def complete_login(otp: Optional[str] = None) -> dict:
         )
         cookies.update(_parse_set_cookies(resp2.headers))
 
+        redirect = resp2.headers.get("location", "")
+        if redirect and "error" not in redirect.lower() and "failure" not in redirect.lower():
+            redirect_url = redirect if redirect.startswith("http") else f"https://app.n26.com{redirect}"
+            resp3 = await client.get(redirect_url, headers={"Cookie": _cookie_header(cookies)})
+            cookies.update(_parse_set_cookies(resp3.headers))
+
     redirect = resp2.headers.get("location", "")
     if "error" in redirect.lower() or "failure" in redirect.lower():
         return {"status": "error", "detail": "MFA verification failed"}
-
-    if otp is None:
-        # Push: check if still pending (need to poll)
-        state["cookies"] = cookies
-        save_session(state)
-        return {
-            "status": "pending",
-            "message": "Waiting for push approval. Approve in N26 app then call submit_mfa() again.",
-        }
 
     access_token = _extract_uuid_from_signed_cookie(cookies.get("n26.token", ""))
     expires_at = _extract_timestamp_from_signed_cookie(cookies.get("num26expires_at", ""))
 
     if not access_token:
+        if otp is None:
+            state["cookies"] = cookies
+            save_session(state)
+            return {
+                "status": "pending",
+                "message": "Waiting for push approval. Approve in N26 app then call submit_mfa() again.",
+            }
         return {"status": "error", "detail": "Login succeeded but could not extract access token"}
 
     state["cookies"] = cookies

@@ -32,7 +32,7 @@ class N26Client:
         return await self._get("/api/me")
 
     async def get_account(self) -> dict:
-        return await self._get("/api/v2/accounts")
+        return await self._get("/api/accounts")
 
     async def get_transactions(
         self,
