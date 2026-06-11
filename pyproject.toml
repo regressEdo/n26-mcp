@@ -6,7 +6,23 @@ build-backend = "hatchling.build"
 name = "n26-mcp"
 version = "0.1.0"
 description = "MCP server for N26 bank (read-only)"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Edoardo Beltramo" }]
+keywords = ["mcp", "n26", "banking", "claude"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
 requires-python = ">=3.11"
+
+[project.urls]
+Homepage = "https://github.com/regressEdo/n26-mcp"
+Issues = "https://github.com/regressEdo/n26-mcp/issues"
+
 dependencies = [
     "mcp[cli]>=1.0.0",
     "httpx>=0.27.0",

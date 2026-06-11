@@ -1,7 +1,8 @@
 .PHONY: setup register run dev test status logout clean help
 
-CONFIG_DIR := $(HOME)/.config/n26-mcp
-REPO_DIR   := $(shell pwd)
+CONFIG_DIR  := $(HOME)/.config/n26-mcp
+REPO_DIR    := $(shell pwd)
+OP_ENV_FILE ?= $(HOME)/.config/op/local-env.env
 
 setup: ## Install deps and verify credentials are accessible
 	uv sync
@@ -13,13 +14,9 @@ setup: ## Install deps and verify credentials are accessible
 		else \
 			echo "  .env: missing N26_USERNAME or N26_PASSWORD — check .env (see .env.example)"; \
 		fi; \
-	elif command -v op >/dev/null 2>&1; then \
-		op read "op://Local Environment/ENV/N26_USERNAME" >/dev/null 2>&1 \
-			&& echo "  1Password: N26_USERNAME OK" \
-			|| echo "  1Password: N26_USERNAME NOT FOUND"; \
-		op read "op://Local Environment/ENV/N26_PASSWORD" >/dev/null 2>&1 \
-			&& echo "  1Password: N26_PASSWORD OK" \
-			|| echo "  1Password: N26_PASSWORD NOT FOUND"; \
+	elif command -v op >/dev/null 2>&1 && [ -f "$(OP_ENV_FILE)" ]; then \
+		echo "  1Password env file: $(OP_ENV_FILE)"; \
+		echo "  Run: op run --env-file $(OP_ENV_FILE) -- env | grep N26 to verify"; \
 	else \
 		echo "  No .env file found and op CLI not available."; \
 		echo "  Copy .env.example to .env and fill in your credentials."; \
@@ -29,7 +26,7 @@ register: ## Register n26-mcp with Claude Code (auto-detects op vs plain .env)
 	@if command -v op >/dev/null 2>&1 && [ ! -f .env -o "$$(grep -c '^N26_' .env 2>/dev/null | head -1)" = "0" ] || \
 	    grep -q '^N26_USERNAME=op://' .env 2>/dev/null; then \
 		echo "Registering with 1Password (op run)..."; \
-		claude mcp add n26 --scope user -- op run --env-file $(HOME)/.config/op/local-env.env -- uv --directory $(REPO_DIR) run n26-mcp; \
+		claude mcp add n26 --scope user -- op run --env-file $(OP_ENV_FILE) -- uv --directory $(REPO_DIR) run n26-mcp; \
 	else \
 		echo "Registering with plain .env (dotenv auto-load)..."; \
 		claude mcp add n26 --scope user -- uv --directory $(REPO_DIR) run n26-mcp; \

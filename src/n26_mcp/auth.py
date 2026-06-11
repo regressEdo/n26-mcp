@@ -53,8 +53,9 @@ def _get_credentials() -> tuple[str, str]:
     password = os.getenv("N26_PASSWORD")
     if not username or not password:
         raise RuntimeError(
-            "N26_USERNAME and N26_PASSWORD must be set in 1Password "
-            "(op://Local Environment/ENV/N26_USERNAME)"
+            "N26_USERNAME and N26_PASSWORD must be set. "
+            "Copy .env.example to .env and fill in your credentials, "
+            "or use 1Password: op://Vault/Item/N26_USERNAME"
         )
     return username, password
 

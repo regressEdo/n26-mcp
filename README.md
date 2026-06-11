@@ -1,5 +1,8 @@
 # n26-mcp
 
+[![CI](https://github.com/regressEdo/n26-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/regressEdo/n26-mcp/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 MCP server for N26 bank — read-only access via the unofficial N26 web API.
 
 > **Warning:** Uses reverse-engineered internal API (`api.tech26.de` and `app.n26.com`). No official support. May break on N26 API changes.
@@ -27,9 +30,15 @@ N26_PASSWORD=your-n26-password
 **Option B — 1Password CLI** (recommended):
 
 ```ini
-# .env  (or use ~/.config/op/local-env.env)
-N26_USERNAME=op://Vault/Item/N26_USERNAME
-N26_PASSWORD=op://Vault/Item/N26_PASSWORD
+# .env  (or a dedicated env file, e.g. ~/.config/op/local-env.env)
+N26_USERNAME=op://YourVault/YourItem/N26_USERNAME
+N26_PASSWORD=op://YourVault/YourItem/N26_PASSWORD
+```
+
+Set `OP_ENV_FILE` to point at your 1Password env file (default: `~/.config/op/local-env.env`):
+
+```bash
+make register OP_ENV_FILE=~/.config/op/my-env.env
 ```
 
 ### 2. Install and verify
